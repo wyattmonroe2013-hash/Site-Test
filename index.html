@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Moderator Certification Testing Site</title>
+
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header>
+    <h1>Moderator Certification Examination</h1>
+    <p>Testing & Qualification Platform</p>
+</header>
+
+<div class="container">
+
+    <div class="card">
+        <h2>Welcome</h2>
+
+        <p>
+            This examination evaluates a candidate's ability to moderate
+            an online messaging platform according to the following core
+            policies:
+        </p>
+
+        <ul>
+            <li>All messages and actions must be age appropriate.</li>
+            <li>All messages and actions must not be racist, homophobic, transphobic, ableist, or discriminatory.</li>
+            <li>All messages and actions must not request personal information and must comply with applicable U.S. laws.</li>
+        </ul>
+
+        <p>
+            The examination consists of:
+        </p>
+
+        <div class="info-grid">
+
+            <div class="card">
+                <h3>20 Policy Questions</h3>
+                <p>
+                    Multiple-choice moderation scenarios.
+                </p>
+            </div>
+
+            <div class="card">
+                <h3>Chat Log Review</h3>
+                <p>
+                    Analyze conversations and determine appropriate actions.
+                </p>
+            </div>
+
+            <div class="card">
+                <h3>Written Responses</h3>
+                <p>
+                    Explain moderation decisions in detail.
+                </p>
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="card">
+
+        <h2>Candidate Information</h2>
+
+        <label for="candidateName">
+            Full Name
+        </label>
+
+        <input
+            type="text"
+            id="candidateName"
+            placeholder="Enter your name">
+
+        <label for="candidateEmail">
+            Email Address
+        </label>
+
+        <input
+            type="email"
+            id="candidateEmail"
+            placeholder="Enter your email">
+
+        <button
+            class="btn"
+            id="startExamBtn">
+            Start Examination
+        </button>
+
+    </div>
+
+    <div class="card">
+
+        <h2>Administrator Access</h2>
+
+        <p>
+            Review and grade submitted examinations.
+        </p>
+
+        <a
+            href="admin.html"
+            class="btn btn-secondary">
+            Admin Login
+        </a>
+
+    </div>
+
+</div>
+
+<div class="footer">
+    Moderator Certification Testing Site
+</div>
+
+<script>
+
+document
+.getElementById("startExamBtn")
+.addEventListener("click", () => {
+
+    const name =
+        document
+        .getElementById("candidateName")
+        .value
+        .trim();
+
+    const email =
+        document
+        .getElementById("candidateEmail")
+        .value
+        .trim();
+
+    if (!name || !email) {
+
+        alert(
+            "Please enter your name and email."
+        );
+
+        return;
+    }
+
+    sessionStorage.setItem(
+        "candidateName",
+        name
+    );
+
+    sessionStorage.setItem(
+        "candidateEmail",
+        email
+    );
+
+    location.href =
+        "exam.html";
+});
+</script>
+
+</body>
+</html>
