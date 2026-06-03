@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard</title>
+
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header>
+    <h1>Exam Dashboard</h1>
+    <p>Review and grade submissions</p>
+</header>
+
+<div class="container">
+
+    <div class="card">
+        <h2>Pending Submissions</h2>
+        <div id="list"></div>
+    </div>
+
+    <div class="card" id="review" style="display:none;">
+        <h2>Review Submission</h2>
+
+        <p><b>Name:</b> <span id="rName"></span></p>
+        <p><b>Email:</b> <span id="rEmail"></span></p>
+        <p><b>Auto Score:</b> <span id="rScore"></span></p>
+
+        <hr>
+
+        <h3>Written Responses</h3>
+
+        <p><b>1:</b></p>
+        <div id="w1"></div>
+
+        <p><b>2:</b></p>
+        <div id="w2"></div>
+
+        <p><b>3:</b></p>
+        <div id="w3"></div>
+
+        <hr>
+
+        <label>Written Score (0–30)</label>
+        <input type="number" id="writtenScore">
+
+        <button class="btn" onclick="finalize(true)">
+            Approve (Pass)
+        </button>
+
+        <button class="btn btn-secondary" onclick="finalize(false)">
+            Reject (Fail)
+        </button>
+    </div>
+
+</div>
+
+<script type="module" src="js/admin.js"></script>
+
+</body>
+</html>
