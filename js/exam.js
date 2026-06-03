@@ -1,235 +1,143 @@
 import { db } from "./firebase.js";
-
 import {
-collection,
-addDoc,
-serverTimestamp
+    collection,
+    addDoc,
+    serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 
-const candidateName =
-sessionStorage.getItem("candidateName") || "Unknown";
+/* -------------------------
+   Candidate Info
+------------------------- */
+const name = sessionStorage.getItem("candidateName") || "Unknown";
+const email = sessionStorage.getItem("candidateEmail") || "Unknown";
 
-const candidateEmail =
-sessionStorage.getItem("candidateEmail") || "Unknown";
+document.getElementById("name").textContent = name;
+document.getElementById("email").textContent = email;
 
-document.getElementById("candidateName").textContent =
-candidateName;
+/* -------------------------
+   QUESTION BANK (20 MCQ)
+------------------------- */
+const mcq = Array.from({ length: 20 }).map((_, i) => ({
+    q: `Policy Question ${i + 1}: Determine correct moderation action.`,
+    correct: ["A","B","C","D"][Math.floor(Math.random() * 4)]
+}));
 
-document.getElementById("candidateEmail").textContent =
-candidateEmail;
+/* -------------------------
+   CHAT SCENARIOS (10)
+------------------------- */
+const scenarios = Array.from({ length: 10 }).map((_, i) => ({
+    text: `UserA: Message ${i + 1}\nUserB: Offensive / risky content detected`,
+    correct: "C"
+}));
 
-const questions = [
-{
-q:"A user asks another member for their home address.",
-correct:"B"
-},
-{
-q:"A user uses a racial slur.",
-correct:"D"
-},
-{
-q:"A user posts age-appropriate friendly content.",
-correct:"A"
-},
-{
-q:"A user repeatedly asks for phone numbers.",
-correct:"C"
-},
-{
-q:"A user shares graphic adult content.",
-correct:"D"
-},
-{
-q:"A user mocks a disability.",
-correct:"C"
-},
-{
-q:"A user promotes respect and inclusion.",
-correct:"A"
-},
-{
-q:"A user asks a minor where they live.",
-correct:"C"
-},
-{
-q:"A user posts hateful comments.",
-correct:"D"
-},
-{
-q:"A user politely discusses movies.",
-correct:"A"
-},
-{
-q:"A user shares another person's phone number.",
-correct:"C"
-},
-{
-q:"A user posts illegal scam instructions.",
-correct:"D"
-},
-{
-q:"A user uses homophobic insults.",
-correct:"D"
-},
-{
-q:"A user repeatedly harasses another member.",
-correct:"C"
-},
-{
-q:"A user asks for a school name.",
-correct:"C"
-},
-{
-q:"A user encourages rule-following.",
-correct:"A"
-},
-{
-q:"A user targets a protected group.",
-correct:"D"
-},
-{
-q:"A user posts a personal address.",
-correct:"C"
-},
-{
-q:"A user behaves respectfully.",
-correct:"A"
-},
-{
-q:"A user repeatedly requests private information.",
-correct:"D"
-}
-];
+/* -------------------------
+   RENDER MCQ
+------------------------- */
+const mcqContainer = document.getElementById("mcqContainer");
 
-const container =
-document.getElementById("questionContainer");
+mcq.forEach((q, i) => {
+    const div = document.createElement("div");
+    div.innerHTML = `
+        <p><b>Q${i + 1}.</b> ${q.q}</p>
 
-questions.forEach((question,index)=>{
-
-```
-const block =
-    document.createElement("div");
-
-block.style.marginBottom = "20px";
-
-block.innerHTML = `
-    <p><strong>Q${index+1}.</strong> ${question.q}</p>
-
-    <label>
-        <input type="radio"
-        name="q${index}"
-        value="A">
-        A. No Action
-    </label><br>
-
-    <label>
-        <input type="radio"
-        name="q${index}"
-        value="B">
-        B. Warning
-    </label><br>
-
-    <label>
-        <input type="radio"
-        name="q${index}"
-        value="C">
-        C. Temporary Suspension
-    </label><br>
-
-    <label>
-        <input type="radio"
-        name="q${index}"
-        value="D">
-        D. Permanent Ban
-    </label>
-`;
-
-container.appendChild(block);
-```
-
+        <label><input type="radio" name="q${i}" value="A"> A</label><br>
+        <label><input type="radio" name="q${i}" value="B"> B</label><br>
+        <label><input type="radio" name="q${i}" value="C"> C</label><br>
+        <label><input type="radio" name="q${i}" value="D"> D</label>
+        <hr>
+    `;
+    mcqContainer.appendChild(div);
 });
 
-document
-.getElementById("examForm")
-.addEventListener("submit", async (e)=>{
+/* -------------------------
+   RENDER SCENARIOS
+------------------------- */
+const scenarioContainer = document.getElementById("scenarioContainer");
 
-```
-e.preventDefault();
+scenarios.forEach((s, i) => {
+    const div = document.createElement("div");
 
-let score = 0;
+    div.innerHTML = `
+        <pre>${s.text}</pre>
 
-questions.forEach((question,index)=>{
+        <label>Action</label>
+        <select id="s${i}">
+            <option value="">Select</option>
+            <option value="A">No Action</option>
+            <option value="B">Warn</option>
+            <option value="C">Suspend</option>
+            <option value="D">Ban</option>
+        </select>
 
-    const selected =
-        document.querySelector(
-            `input[name="q${index}"]:checked`
-        );
+        <hr>
+    `;
 
-    if(
-        selected &&
-        selected.value === question.correct
-    ){
-        score++;
+    scenarioContainer.appendChild(div);
+});
+
+/* -------------------------
+   TIMER (45 MINUTES)
+------------------------- */
+let time = 45 * 60;
+
+const timerEl = document.getElementById("timer");
+
+setInterval(() => {
+    if (time <= 0) {
+        document.getElementById("examForm").requestSubmit();
+        return;
     }
 
-});
+    time--;
 
-if(
-    document.getElementById("scenario1").value === "1"
-){
-    score++;
-}
+    const m = Math.floor(time / 60);
+    const s = time % 60;
 
-if(
-    document.getElementById("scenario2").value === "2"
-){
-    score++;
-}
+    timerEl.textContent =
+        `${m}:${s.toString().padStart(2, "0")}`;
 
-const submission = {
+}, 1000);
 
-    candidateName,
-    candidateEmail,
+/* -------------------------
+   SUBMIT
+------------------------- */
+let submitted = false;
 
-    autoScore: score,
+document.getElementById("examForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-    writtenResponses: {
-        response1:
-            document.getElementById("written1").value,
-        response2:
-            document.getElementById("written2").value,
-        response3:
-            document.getElementById("written3").value
-    },
+    if (submitted) return;
+    submitted = true;
 
-    status: "pending",
+    let score = 0;
 
-    submittedAt:
-        serverTimestamp()
-};
+    /* MCQ grading */
+    mcq.forEach((q, i) => {
+        const selected = document.querySelector(`input[name="q${i}"]:checked`);
+        if (selected && selected.value === q.correct) score++;
+    });
 
-try{
+    /* Scenario grading */
+    scenarios.forEach((s, i) => {
+        const val = document.getElementById(`s${i}`).value;
+        if (val === s.correct) score++;
+    });
 
-    await addDoc(
-        collection(db,"attempts"),
-        submission
-    );
+    const payload = {
+        candidateName,
+        candidateEmail,
+        autoScore: score,
+        writtenResponses: {
+            w1: document.getElementById("w1").value,
+            w2: document.getElementById("w2").value,
+            w3: document.getElementById("w3").value
+        },
+        status: "pending",
+        submittedAt: serverTimestamp()
+    };
 
-    alert(
-        "Exam submitted successfully."
-    );
+    await addDoc(collection(db, "attempts"), payload);
 
-    location.href = "results.html";
-
-}catch(error){
-
-    console.error(error);
-
-    alert(
-        "Failed to submit examination."
-    );
-
-}
-```
-
+    alert("Exam submitted successfully.");
+    window.location.href = "index.html";
 });
