@@ -25,12 +25,12 @@
     <div class="card">
         <h2>Exam Timer</h2>
         <h3 id="timer">45:00</h3>
-        <p class="warning">Do not leave this page. Timer will auto-submit.</p>
+        <p class="warning">Auto-submit enabled when time expires.</p>
     </div>
 
     <div class="card">
         <h2>Progress</h2>
-        <p id="progress">0 / 33 questions answered</p>
+        <p id="progress">0 / 33 answered</p>
     </div>
 
     <form id="examForm">
@@ -48,13 +48,13 @@
         <div class="card">
             <h2>Section 3: Written Responses</h2>
 
-            <label>1. Handling harassment reports</label>
+            <label>Handling harassment reports</label>
             <textarea id="w1"></textarea>
 
-            <label>2. Personal information requests</label>
+            <label>Personal information requests</label>
             <textarea id="w2"></textarea>
 
-            <label>3. Hate speech escalation process</label>
+            <label>Hate speech escalation process</label>
             <textarea id="w3"></textarea>
         </div>
 
@@ -68,7 +68,170 @@
 
 </div>
 
-<script type="module" src="js/exam.js"></script>
+<!-- SAFE LOADER -->
+<script type="module">
+window.addEventListener("DOMContentLoaded", async () => {
+
+    try {
+
+        const { db } = await import("./js/firebase.js");
+        const {
+            collection,
+            addDoc,
+            serverTimestamp
+        } = await import("https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js");
+
+        /* -------------------------
+           Candidate Info
+        ------------------------- */
+        const name = sessionStorage.getItem("candidateName") || "Unknown";
+        const email = sessionStorage.getItem("candidateEmail") || "Unknown";
+
+        document.getElementById("name").textContent = name;
+        document.getElementById("email").textContent = email;
+
+        /* -------------------------
+           QUESTIONS
+        ------------------------- */
+        const mcq = Array.from({ length: 20 }, (_, i) => ({
+            q: `Policy Question ${i + 1}: Choose the correct moderation action.`,
+            correct: ["A","B","C","D"][Math.floor(Math.random() * 4)]
+        }));
+
+        const scenarios = Array.from({ length: 10 }, (_, i) => ({
+            text: `UserA: Message ${i + 1}\nUserB: Potential policy violation detected`,
+            correct: "C"
+        }));
+
+        /* -------------------------
+           DOM CHECK
+        ------------------------- */
+        const mcqContainer = document.getElementById("mcqContainer");
+        const scenarioContainer = document.getElementById("scenarioContainer");
+
+        if (!mcqContainer || !scenarioContainer) {
+            console.error("Missing containers");
+            return;
+        }
+
+        /* -------------------------
+           RENDER MCQ
+        ------------------------- */
+        mcq.forEach((q, i) => {
+
+            const div = document.createElement("div");
+
+            div.innerHTML = `
+                <p><b>Q${i + 1}.</b> ${q.q}</p>
+
+                <label><input type="radio" name="q${i}" value="A"> A</label><br>
+                <label><input type="radio" name="q${i}" value="B"> B</label><br>
+                <label><input type="radio" name="q${i}" value="C"> C</label><br>
+                <label><input type="radio" name="q${i}" value="D"> D</label>
+                <hr>
+            `;
+
+            mcqContainer.appendChild(div);
+        });
+
+        /* -------------------------
+           RENDER SCENARIOS
+        ------------------------- */
+        scenarios.forEach((s, i) => {
+
+            const div = document.createElement("div");
+
+            div.innerHTML = `
+                <pre>${s.text}</pre>
+
+                <label>Action</label>
+                <select id="s${i}">
+                    <option value="">Select</option>
+                    <option value="A">No Action</option>
+                    <option value="B">Warning</option>
+                    <option value="C">Suspension</option>
+                    <option value="D">Ban</option>
+                </select>
+
+                <hr>
+            `;
+
+            scenarioContainer.appendChild(div);
+        });
+
+        /* -------------------------
+           TIMER
+        ------------------------- */
+        let time = 45 * 60;
+        const timerEl = document.getElementById("timer");
+
+        setInterval(() => {
+
+            if (time <= 0) {
+                document.getElementById("examForm").requestSubmit();
+                return;
+            }
+
+            time--;
+
+            const m = Math.floor(time / 60);
+            const s = time % 60;
+
+            timerEl.textContent =
+                `${m}:${s.toString().padStart(2, "0")}`;
+
+        }, 1000);
+
+        /* -------------------------
+           SUBMIT
+        ------------------------- */
+        let submitted = false;
+
+        document.getElementById("examForm").addEventListener("submit", async (e) => {
+
+            e.preventDefault();
+
+            if (submitted) return;
+            submitted = true;
+
+            let score = 0;
+
+            mcq.forEach((q, i) => {
+                const selected = document.querySelector(`input[name="q${i}"]:checked`);
+                if (selected && selected.value === q.correct) score++;
+            });
+
+            scenarios.forEach((s, i) => {
+                const val = document.getElementById(`s${i}`).value;
+                if (val === s.correct) score++;
+            });
+
+            const submission = {
+                candidateName: name,
+                candidateEmail: email,
+                autoScore: score,
+                writtenResponses: {
+                    w1: document.getElementById("w1").value,
+                    w2: document.getElementById("w2").value,
+                    w3: document.getElementById("w3").value
+                },
+                status: "pending",
+                submittedAt: serverTimestamp()
+            };
+
+            await addDoc(collection(db, "attempts"), submission);
+
+            alert("Exam submitted successfully.");
+            window.location.href = "index.html";
+        });
+
+    } catch (err) {
+        console.error("Exam failed to load:", err);
+        alert("Error loading exam. Check console.");
+    }
+
+});
+</script>
 
 </body>
 </html>
