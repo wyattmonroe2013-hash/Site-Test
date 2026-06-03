@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Moderator Examination V3</title>
+
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header>
+    <h1>Moderator Certification Exam</h1>
+    <p>Version 3 — Complete Assessment</p>
+</header>
+
+<div class="container">
+
+    <div class="card">
+        <h2>Candidate Info</h2>
+        <p><strong>Name:</strong> <span id="name"></span></p>
+        <p><strong>Email:</strong> <span id="email"></span></p>
+    </div>
+
+    <div class="card">
+        <h2>Exam Timer</h2>
+        <h3 id="timer">45:00</h3>
+        <p class="warning">Do not leave this page. Timer will auto-submit.</p>
+    </div>
+
+    <div class="card">
+        <h2>Progress</h2>
+        <p id="progress">0 / 33 questions answered</p>
+    </div>
+
+    <form id="examForm">
+
+        <div class="card">
+            <h2>Section 1: Policy Questions (20)</h2>
+            <div id="mcqContainer"></div>
+        </div>
+
+        <div class="card">
+            <h2>Section 2: Chat Log Scenarios (10)</h2>
+            <div id="scenarioContainer"></div>
+        </div>
+
+        <div class="card">
+            <h2>Section 3: Written Responses</h2>
+
+            <label>1. Handling harassment reports</label>
+            <textarea id="w1"></textarea>
+
+            <label>2. Personal information requests</label>
+            <textarea id="w2"></textarea>
+
+            <label>3. Hate speech escalation process</label>
+            <textarea id="w3"></textarea>
+        </div>
+
+        <div class="card center">
+            <button class="btn" type="submit">
+                Submit Examination
+            </button>
+        </div>
+
+    </form>
+
+</div>
+
+<script type="module" src="js/exam.js"></script>
+
+</body>
+</html>
