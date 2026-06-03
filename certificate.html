@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Certificate</title>
+
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header>
+    <h1>Certification Viewer</h1>
+</header>
+
+<div class="container">
+
+    <div class="card">
+        <h2>Enter Candidate Email</h2>
+
+        <input type="email" id="email" placeholder="user@email.com">
+
+        <button class="btn" onclick="loadCert()">
+            Generate Certificate
+        </button>
+    </div>
+
+    <div class="card" id="cert" style="display:none;">
+        <h2>Moderator Certification</h2>
+
+        <p><b>Name:</b> <span id="name"></span></p>
+        <p><b>Email:</b> <span id="mail"></span></p>
+        <p><b>Status:</b> <span id="status"></span></p>
+        <p><b>Final Score:</b> <span id="score"></span></p>
+
+        <hr>
+
+        <h3>Certificate ID</h3>
+        <p id="cid"></p>
+    </div>
+
+</div>
+
+<script type="module" src="js/cert.js"></script>
+
+</body>
+</html>
