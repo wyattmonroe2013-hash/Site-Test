@@ -1,143 +1,917 @@
-import { db } from "./firebase.js";
 import {
     collection,
+    query,
+    where,
+    getDocs,
     addDoc,
     serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 
-/* -------------------------
-   Candidate Info
-------------------------- */
-const name = sessionStorage.getItem("candidateName") || "Unknown";
-const email = sessionStorage.getItem("candidateEmail") || "Unknown";
+/* ==========================================
+   DOM ELEMENTS
+========================================== */
 
-document.getElementById("name").textContent = name;
-document.getElementById("email").textContent = email;
+const startExamBtn =
+    document.getElementById("startExamBtn");
 
-/* -------------------------
-   QUESTION BANK (20 MCQ)
-------------------------- */
-const mcq = Array.from({ length: 20 }).map((_, i) => ({
-    q: `Policy Question ${i + 1}: Determine correct moderation action.`,
-    correct: ["A","B","C","D"][Math.floor(Math.random() * 4)]
-}));
+const accessMessage =
+    document.getElementById("accessMessage");
 
-/* -------------------------
-   CHAT SCENARIOS (10)
-------------------------- */
-const scenarios = Array.from({ length: 10 }).map((_, i) => ({
-    text: `UserA: Message ${i + 1}\nUserB: Offensive / risky content detected`,
-    correct: "C"
-}));
+const accessCard =
+    document.getElementById("accessCard");
 
-/* -------------------------
-   RENDER MCQ
-------------------------- */
-const mcqContainer = document.getElementById("mcqContainer");
+const examWrapper =
+    document.getElementById("examWrapper");
 
-mcq.forEach((q, i) => {
-    const div = document.createElement("div");
-    div.innerHTML = `
-        <p><b>Q${i + 1}.</b> ${q.q}</p>
+const candidateNameInput =
+    document.getElementById("candidateName");
 
-        <label><input type="radio" name="q${i}" value="A"> A</label><br>
-        <label><input type="radio" name="q${i}" value="B"> B</label><br>
-        <label><input type="radio" name="q${i}" value="C"> C</label><br>
-        <label><input type="radio" name="q${i}" value="D"> D</label>
-        <hr>
-    `;
-    mcqContainer.appendChild(div);
-});
+const candidateEmailInput =
+    document.getElementById("candidateEmail");
 
-/* -------------------------
-   RENDER SCENARIOS
-------------------------- */
-const scenarioContainer = document.getElementById("scenarioContainer");
+const displayName =
+    document.getElementById("displayName");
 
-scenarios.forEach((s, i) => {
-    const div = document.createElement("div");
+const displayEmail =
+    document.getElementById("displayEmail");
 
-    div.innerHTML = `
-        <pre>${s.text}</pre>
+const questionContainer =
+    document.getElementById("questionContainer");
 
-        <label>Action</label>
-        <select id="s${i}">
-            <option value="">Select</option>
-            <option value="A">No Action</option>
-            <option value="B">Warn</option>
-            <option value="C">Suspend</option>
-            <option value="D">Ban</option>
-        </select>
+const scenarioContainer =
+    document.getElementById("scenarioContainer");
 
-        <hr>
-    `;
+const progressElement =
+    document.getElementById("progress");
 
-    scenarioContainer.appendChild(div);
-});
+/* ==========================================
+   GLOBAL STATE
+========================================== */
 
-/* -------------------------
-   TIMER (45 MINUTES)
-------------------------- */
-let time = 45 * 60;
+let selectedQuestions = [];
+let selectedScenarios = [];
 
-const timerEl = document.getElementById("timer");
+let candidateName = "";
+let candidateEmail = "";
 
-setInterval(() => {
-    if (time <= 0) {
-        document.getElementById("examForm").requestSubmit();
-        return;
+/* ==========================================
+   QUESTION BANK
+========================================== */
+
+const QUESTION_BANK = [
+
+{
+question:
+"A user asks another member for their home address.",
+
+answers:[
+"No action is required.",
+"Issue a reminder about privacy.",
+"Remove the message and issue a warning.",
+"Permanently ban the user."
+],
+
+correct:
+"Remove the message and issue a warning."
+},
+
+{
+question:
+"A user posts discriminatory comments targeting a protected group.",
+
+answers:[
+"No action is required.",
+"Ask them to be nicer.",
+"Temporarily hide the comment.",
+"Remove the content and apply severe enforcement."
+],
+
+correct:
+"Remove the content and apply severe enforcement."
+},
+
+{
+question:
+"A user repeatedly asks minors what school they attend.",
+
+answers:[
+"No action is required.",
+"Politely ignore it.",
+"Moderate for soliciting personal information.",
+"Reward the user."
+],
+
+correct:
+"Moderate for soliciting personal information."
+},
+
+{
+question:
+"A user posts explicit adult content in a community containing minors.",
+
+answers:[
+"No action is required.",
+"Issue a reminder.",
+"Temporarily mute the user.",
+"Remove the content and apply severe enforcement."
+],
+
+correct:
+"Remove the content and apply severe enforcement."
+},
+
+{
+question:
+"A user politely discusses a movie they watched.",
+
+answers:[
+"No action is required.",
+"Issue a warning.",
+"Suspend the user.",
+"Ban the user."
+],
+
+correct:
+"No action is required."
+},
+
+{
+question:
+"A user posts another person's phone number publicly.",
+
+answers:[
+"No action is required.",
+"Ask if permission was granted.",
+"Remove the content and take moderation action.",
+"Pin the message."
+],
+
+correct:
+"Remove the content and take moderation action."
+},
+
+{
+question:
+"A user repeatedly insults another member.",
+
+answers:[
+"No action is required.",
+"Document and escalate moderation action.",
+"Reward the behavior.",
+"Delete the victim's messages."
+],
+
+correct:
+"Document and escalate moderation action."
+},
+
+{
+question:
+"A user asks for another member's exact location.",
+
+answers:[
+"No action.",
+"Privacy reminder.",
+"Moderate for personal information solicitation.",
+"Feature the request."
+],
+
+correct:
+"Moderate for personal information solicitation."
+},
+
+{
+question:
+"A user posts hateful content directed at a protected group.",
+
+answers:[
+"No action.",
+"Reminder only.",
+"Temporary mute only.",
+"Remove content and enforce policy."
+],
+
+correct:
+"Remove content and enforce policy."
+},
+
+{
+question:
+"A user respectfully disagrees with another member.",
+
+answers:[
+"No action.",
+"Warning.",
+"Suspension.",
+"Ban."
+],
+
+correct:
+"No action."
+}
+
+];
+
+/* ==========================================
+   SCENARIO BANK
+========================================== */
+
+const SCENARIO_BANK = [
+
+{
+scenario:
+`UserA: Hello everyone.
+UserB: Nobody wants you here.
+UserA: Why?
+UserB: Because you're annoying.`,
+
+answers:[
+"No action required.",
+"Issue harassment warning.",
+"Delete UserA account.",
+"Ban everyone."
+],
+
+correct:
+"Issue harassment warning."
+},
+
+{
+scenario:
+`UserA: I'm 14.
+UserB: What school do you attend?
+UserA: Lincoln Middle School.
+UserB: What's your address?`,
+
+answers:[
+"Acceptable conversation.",
+"Privacy violation.",
+"Spam.",
+"Off-topic discussion."
+],
+
+correct:
+"Privacy violation."
+},
+
+{
+scenario:
+`UserA: People with disabilities shouldn't be here.`,
+
+answers:[
+"No action.",
+"Reminder.",
+"Escalated moderation action.",
+"Feature message."
+],
+
+correct:
+"Escalated moderation action."
+}
+
+];
+
+/* ==========================================
+   UTILITIES
+========================================== */
+
+function shuffle(array){
+
+    return [...array]
+        .sort(() => Math.random() - 0.5);
+
+}
+
+/* ==========================================
+   ATTEMPT CHECK
+========================================== */
+
+async function checkAttemptStatus(email){
+
+    const q = query(
+        collection(db, "attempts"),
+        where("candidateEmail", "==", email)
+    );
+
+    const snap = await getDocs(q);
+
+    let hasPassed = false;
+    let hasPending = false;
+
+    snap.forEach(doc => {
+
+        const data = doc.data();
+
+        if(data.status === "passed"){
+            hasPassed = true;
+        }
+
+        if(data.status === "pending"){
+            hasPending = true;
+        }
+
+    });
+
+    return {
+        hasPassed,
+        hasPending
+    };
+
+}
+
+/* ==========================================
+   START EXAM
+========================================== */
+
+startExamBtn.addEventListener(
+    "click",
+    async () => {
+
+        candidateName =
+            candidateNameInput.value.trim();
+
+        candidateEmail =
+            candidateEmailInput.value
+            .trim()
+            .toLowerCase();
+
+        if(!candidateName){
+
+            accessMessage.textContent =
+                "Enter your name.";
+
+            return;
+        }
+
+        if(!candidateEmail){
+
+            accessMessage.textContent =
+                "Enter your email.";
+
+            return;
+        }
+
+        accessMessage.textContent =
+            "Checking eligibility...";
+
+        try{
+
+            const result =
+                await checkAttemptStatus(
+                    candidateEmail
+                );
+
+            if(result.hasPassed){
+
+                accessMessage.innerHTML =
+                    "<span class='success'>You have already passed this certification.</span>";
+
+                return;
+            }
+
+            if(result.hasPending){
+
+                accessMessage.innerHTML =
+                    "<span class='warning'>Your previous attempt is awaiting review.</span>";
+
+                return;
+            }
+
+            beginExam();
+
+        }
+        catch(error){
+
+            console.error(error);
+
+            accessMessage.innerHTML =
+                "<span class='warning'>Unable to verify eligibility.</span>";
+
+        }
+
     }
+);
 
-    time--;
+/* ==========================================
+   BEGIN EXAM
+========================================== */
 
-    const m = Math.floor(time / 60);
-    const s = time % 60;
+function beginExam(){
 
-    timerEl.textContent =
-        `${m}:${s.toString().padStart(2, "0")}`;
+    displayName.textContent =
+        candidateName;
 
-}, 1000);
+    displayEmail.textContent =
+        candidateEmail;
 
-/* -------------------------
-   SUBMIT
-------------------------- */
+    accessCard.classList.add("hidden");
+
+    examWrapper.classList.remove("hidden");
+
+    selectedQuestions =
+        shuffle(QUESTION_BANK)
+        .slice(0, 10);
+
+    selectedScenarios =
+        shuffle(SCENARIO_BANK)
+        .slice(0, 3);
+
+    renderQuestions();
+
+    renderScenarios();
+
+    updateProgress();
+
+}
+
+/* ==========================================
+   RENDER QUESTIONS
+========================================== */
+
+function renderQuestions(){
+
+    questionContainer.innerHTML = "";
+
+    selectedQuestions.forEach(
+        (question, index) => {
+
+            const div =
+                document.createElement("div");
+
+            div.className =
+                "question";
+
+            let html =
+                `<p>Question ${index + 1}: ${question.question}</p>`;
+
+            shuffle(question.answers)
+            .forEach(answer => {
+
+                html += `
+                <label>
+                    <input
+                        type="radio"
+                        name="question_${index}"
+                        value="${answer}">
+                    ${answer}
+                </label>
+                `;
+
+            });
+
+            div.innerHTML = html;
+
+            questionContainer.appendChild(div);
+
+        }
+    );
+
+}
+
+/* ==========================================
+   RENDER SCENARIOS
+========================================== */
+
+function renderScenarios(){
+
+    scenarioContainer.innerHTML = "";
+
+    selectedScenarios.forEach(
+        (scenario, index) => {
+
+            const div =
+                document.createElement("div");
+
+            div.className =
+                "question";
+
+            let html = `
+                <pre>${scenario.scenario}</pre>
+            `;
+
+            shuffle(scenario.answers)
+            .forEach(answer => {
+
+                html += `
+                <label>
+                    <input
+                        type="radio"
+                        name="scenario_${index}"
+                        value="${answer}">
+                    ${answer}
+                </label>
+                `;
+
+            });
+
+            div.innerHTML = html;
+
+            scenarioContainer.appendChild(div);
+
+        }
+    );
+
+}
+
+/* ==========================================
+   PROGRESS TRACKING
+========================================== */
+
+document.addEventListener(
+    "change",
+    updateProgress
+);
+
+function updateProgress(){
+
+    const answered =
+        document.querySelectorAll(
+            'input[type="radio"]:checked'
+        ).length;
+
+    progressElement.textContent =
+        `${answered} answered`;
+
+}
+
+/* ==========================================
+   FIRESTORE SUBMISSION IMPORTS
+========================================== */
+
+import {
+    addDoc,
+    serverTimestamp
+} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
+
+/* ==========================================
+   TIMER
+========================================== */
+
+const examForm =
+    document.getElementById("examForm");
+
+const timerElement =
+    document.getElementById("timer");
+
 let submitted = false;
 
-document.getElementById("examForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
+let remainingSeconds =
+    45 * 60;
 
-    if (submitted) return;
-    submitted = true;
+const timerInterval =
+    setInterval(() => {
+
+        if(submitted){
+
+            clearInterval(timerInterval);
+
+            return;
+        }
+
+        if(remainingSeconds <= 0){
+
+            clearInterval(timerInterval);
+
+            alert(
+                "Time has expired. Your exam will now be submitted."
+            );
+
+            examForm.requestSubmit();
+
+            return;
+        }
+
+        remainingSeconds--;
+
+        const minutes =
+            Math.floor(
+                remainingSeconds / 60
+            );
+
+        const seconds =
+            remainingSeconds % 60;
+
+        timerElement.textContent =
+            `${minutes}:${String(seconds)
+                .padStart(2,"0")}`;
+
+    }, 1000);
+
+/* ==========================================
+   SCORING
+========================================== */
+
+function calculateScore(){
 
     let score = 0;
 
-    /* MCQ grading */
-    mcq.forEach((q, i) => {
-        const selected = document.querySelector(`input[name="q${i}"]:checked`);
-        if (selected && selected.value === q.correct) score++;
-    });
+    selectedQuestions.forEach(
+        (question, index) => {
 
-    /* Scenario grading */
-    scenarios.forEach((s, i) => {
-        const val = document.getElementById(`s${i}`).value;
-        if (val === s.correct) score++;
-    });
+            const selected =
+                document.querySelector(
+                    `input[name="question_${index}"]:checked`
+                );
 
-    const payload = {
-        candidateName,
-        candidateEmail,
-        autoScore: score,
-        writtenResponses: {
-            w1: document.getElementById("w1").value,
-            w2: document.getElementById("w2").value,
-            w3: document.getElementById("w3").value
-        },
-        status: "pending",
-        submittedAt: serverTimestamp()
-    };
+            if(
+                selected &&
+                selected.value === question.correct
+            ){
+                score++;
+            }
 
-    await addDoc(collection(db, "attempts"), payload);
+        }
+    );
 
-    alert("Exam submitted successfully.");
-    window.location.href = "index.html";
-});
+    selectedScenarios.forEach(
+        (scenario, index) => {
+
+            const selected =
+                document.querySelector(
+                    `input[name="scenario_${index}"]:checked`
+                );
+
+            if(
+                selected &&
+                selected.value === scenario.correct
+            ){
+                score++;
+            }
+
+        }
+    );
+
+    return score;
+
+}
+
+/* ==========================================
+   COLLECT ANSWERS
+========================================== */
+
+function collectAnswers(){
+
+    const objectiveAnswers = [];
+
+    selectedQuestions.forEach(
+        (question, index) => {
+
+            const selected =
+                document.querySelector(
+                    `input[name="question_${index}"]:checked`
+                );
+
+            objectiveAnswers.push({
+
+                type: "question",
+
+                question:
+                    question.question,
+
+                selected:
+                    selected
+                        ? selected.value
+                        : null,
+
+                correct:
+                    question.correct
+
+            });
+
+        }
+    );
+
+    selectedScenarios.forEach(
+        (scenario, index) => {
+
+            const selected =
+                document.querySelector(
+                    `input[name="scenario_${index}"]:checked`
+                );
+
+            objectiveAnswers.push({
+
+                type: "scenario",
+
+                scenario:
+                    scenario.scenario,
+
+                selected:
+                    selected
+                        ? selected.value
+                        : null,
+
+                correct:
+                    scenario.correct
+
+            });
+
+        }
+    );
+
+    return objectiveAnswers;
+
+}
+
+/* ==========================================
+   SUBMIT EXAM
+========================================== */
+
+examForm.addEventListener(
+    "submit",
+    async (event) => {
+
+        event.preventDefault();
+
+        if(submitted){
+            return;
+        }
+
+        submitted = true;
+
+        const submitButton =
+            examForm.querySelector(
+                'button[type="submit"]'
+            );
+
+        submitButton.disabled = true;
+
+        submitButton.textContent =
+            "Submitting...";
+
+        try{
+
+            const autoScore =
+                calculateScore();
+
+            const answers =
+                collectAnswers();
+
+            const writtenResponses = {
+
+                harassment:
+                    document
+                    .getElementById(
+                        "written1"
+                    )
+                    .value
+                    .trim(),
+
+                personalInformation:
+                    document
+                    .getElementById(
+                        "written2"
+                    )
+                    .value
+                    .trim(),
+
+                discrimination:
+                    document
+                    .getElementById(
+                        "written3"
+                    )
+                    .value
+                    .trim()
+
+            };
+
+            const totalObjectiveQuestions =
+                selectedQuestions.length +
+                selectedScenarios.length;
+
+            await addDoc(
+
+                collection(
+                    db,
+                    "attempts"
+                ),
+
+                {
+
+                    candidateName,
+
+                    candidateEmail,
+
+                    autoScore,
+
+                    totalObjectiveQuestions,
+
+                    answers,
+
+                    writtenResponses,
+
+                    status:
+                        "pending",
+
+                    submittedAt:
+                        serverTimestamp(),
+
+                    review: {
+
+                        reviewed: false,
+
+                        reviewedBy: null,
+
+                        reviewedAt: null,
+
+                        finalScore: null,
+
+                        notes: ""
+
+                    }
+
+                }
+
+            );
+
+            clearInterval(
+                timerInterval
+            );
+
+            alert(
+                "Exam submitted successfully. Your submission is now awaiting review."
+            );
+
+            location.href =
+                "index.html";
+
+        }
+        catch(error){
+
+            console.error(
+                error
+            );
+
+            submitted = false;
+
+            submitButton.disabled =
+                false;
+
+            submitButton.textContent =
+                "Submit Examination";
+
+            alert(
+                "Submission failed. Please try again."
+            );
+
+        }
+
+    }
+);
+
+/* ==========================================
+   PAGE EXIT WARNING
+========================================== */
+
+window.addEventListener(
+    "beforeunload",
+    (event) => {
+
+        if(submitted){
+            return;
+        }
+
+        if(
+            examWrapper &&
+            !examWrapper.classList.contains(
+                "hidden"
+            )
+        ){
+
+            event.preventDefault();
+
+            event.returnValue =
+                "";
+
+        }
+
+    }
+);
+
+/* ==========================================
+   ANTI-DOUBLE CLICK
+========================================== */
+
+document.addEventListener(
+    "dblclick",
+    (event) => {
+
+        if(
+            event.target.tagName ===
+            "BUTTON"
+        ){
+
+            event.preventDefault();
+
+        }
+
+    }
+);
+
+/* ==========================================
+   DEBUG
+========================================== */
+
+console.log(
+    "Exam system loaded successfully."
+);
