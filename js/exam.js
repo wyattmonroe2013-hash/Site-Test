@@ -303,7 +303,7 @@ async function checkAttemptStatus(email){
 
         const data = doc.data();
 
-        if(data.status === "passed"){
+        if (data.status === "passed") {
             hasPassed = true;
         }
 
