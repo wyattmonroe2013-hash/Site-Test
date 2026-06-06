@@ -1,237 +1,266 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Moderator Examination V3</title>
+
+<title>Moderator Certification Examination</title>
 
 <link rel="stylesheet" href="css/style.css">
+
+<style>
+body{
+    margin:0;
+    font-family:Arial,Helvetica,sans-serif;
+    background:#f4f4f4;
+}
+
+header{
+    background:#0f172a;
+    color:white;
+    padding:20px;
+    text-align:center;
+}
+
+.container{
+    max-width:1100px;
+    margin:20px auto;
+    padding:0 15px;
+}
+
+.card{
+    background:white;
+    padding:20px;
+    border-radius:10px;
+    margin-bottom:20px;
+    box-shadow:0 2px 8px rgba(0,0,0,.08);
+}
+
+.hidden{
+    display:none;
+}
+
+input[type=text],
+input[type=email]{
+    width:100%;
+    padding:12px;
+    margin-top:5px;
+    margin-bottom:15px;
+    box-sizing:border-box;
+}
+
+textarea{
+    width:100%;
+    min-height:140px;
+    padding:10px;
+    box-sizing:border-box;
+    resize:vertical;
+}
+
+.question{
+    margin-bottom:25px;
+}
+
+.question p{
+    font-weight:bold;
+}
+
+label{
+    display:block;
+    margin:8px 0;
+}
+
+pre{
+    background:#f3f4f6;
+    padding:12px;
+    border-radius:6px;
+    white-space:pre-wrap;
+}
+
+.btn{
+    background:#0f172a;
+    color:white;
+    border:none;
+    padding:12px 18px;
+    cursor:pointer;
+    border-radius:6px;
+}
+
+.btn:hover{
+    opacity:.9;
+}
+
+#timer{
+    color:#dc2626;
+    font-size:30px;
+    font-weight:bold;
+}
+
+#progress{
+    font-weight:bold;
+}
+
+.warning{
+    color:#b91c1c;
+    font-weight:bold;
+}
+
+.success{
+    color:#15803d;
+    font-weight:bold;
+}
+</style>
+
 </head>
 <body>
 
 <header>
-    <h1>Moderator Certification Exam</h1>
-    <p>Version 3 — Complete Assessment</p>
+    <h1>Moderator Certification Examination</h1>
+    <p>
+        Tests moderation aptitude, privacy awareness,
+        discrimination policy enforcement, and safe community management.
+    </p>
 </header>
 
 <div class="container">
 
+```
+<!-- ACCESS CHECK -->
+<div class="card" id="accessCard">
+
+    <h2>Candidate Verification</h2>
+
+    <label>
+        Full Name
+        <input
+            type="text"
+            id="candidateName"
+            placeholder="Enter your full name">
+    </label>
+
+    <label>
+        Email Address
+        <input
+            type="email"
+            id="candidateEmail"
+            placeholder="Enter your email">
+    </label>
+
+    <button
+        class="btn"
+        id="startExamBtn">
+        Start Examination
+    </button>
+
+    <p id="accessMessage"></p>
+
+</div>
+
+<!-- EXAM -->
+<div id="examWrapper" class="hidden">
+
     <div class="card">
-        <h2>Candidate Info</h2>
-        <p><strong>Name:</strong> <span id="name"></span></p>
-        <p><strong>Email:</strong> <span id="email"></span></p>
+
+        <h2>Candidate Information</h2>
+
+        <p>
+            <strong>Name:</strong>
+            <span id="displayName"></span>
+        </p>
+
+        <p>
+            <strong>Email:</strong>
+            <span id="displayEmail"></span>
+        </p>
+
     </div>
 
     <div class="card">
-        <h2>Exam Timer</h2>
-        <h3 id="timer">45:00</h3>
-        <p class="warning">Auto-submit enabled when time expires.</p>
+
+        <h2>Timer</h2>
+
+        <div id="timer">45:00</div>
+
+        <p class="warning">
+            Leaving the page may result in lost progress.
+        </p>
+
     </div>
 
     <div class="card">
+
         <h2>Progress</h2>
-        <p id="progress">0 / 33 answered</p>
+
+        <div id="progress">
+            0 answered
+        </div>
+
     </div>
 
     <form id="examForm">
 
         <div class="card">
-            <h2>Section 1: Policy Questions (20)</h2>
-            <div id="mcqContainer"></div>
+
+            <h2>Section 1 — Moderation Questions</h2>
+
+            <div id="questionContainer"></div>
+
         </div>
 
         <div class="card">
-            <h2>Section 2: Chat Log Scenarios (10)</h2>
+
+            <h2>Section 2 — Moderation Scenarios</h2>
+
             <div id="scenarioContainer"></div>
+
         </div>
 
         <div class="card">
-            <h2>Section 3: Written Responses</h2>
 
-            <label>Handling harassment reports</label>
-            <textarea id="w1"></textarea>
+            <h2>Section 3 — Written Responses</h2>
 
-            <label>Personal information requests</label>
-            <textarea id="w2"></textarea>
+            <label>
+                A member reports ongoing harassment.
+                Explain your moderation process.
+            </label>
 
-            <label>Hate speech escalation process</label>
-            <textarea id="w3"></textarea>
+            <textarea id="written1"></textarea>
+
+            <label>
+                A user requests personal information
+                from minors. Explain your response.
+            </label>
+
+            <textarea id="written2"></textarea>
+
+            <label>
+                A user posts discriminatory content.
+                Explain your enforcement decision.
+            </label>
+
+            <textarea id="written3"></textarea>
+
         </div>
 
-        <div class="card center">
-            <button class="btn" type="submit">
+        <div class="card">
+
+            <button
+                type="submit"
+                class="btn">
                 Submit Examination
             </button>
+
         </div>
 
     </form>
 
 </div>
+```
 
-<!-- SAFE LOADER -->
-<script type="module">
-window.addEventListener("DOMContentLoaded", async () => {
+</div>
 
-    try {
-
-        const { db } = await import("./js/firebase.js");
-        const {
-            collection,
-            addDoc,
-            serverTimestamp
-        } = await import("https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js");
-
-        /* -------------------------
-           Candidate Info
-        ------------------------- */
-        const name = sessionStorage.getItem("candidateName") || "Unknown";
-        const email = sessionStorage.getItem("candidateEmail") || "Unknown";
-
-        document.getElementById("name").textContent = name;
-        document.getElementById("email").textContent = email;
-
-        /* -------------------------
-           QUESTIONS
-        ------------------------- */
-        const mcq = Array.from({ length: 20 }, (_, i) => ({
-            q: `Policy Question ${i + 1}: Choose the correct moderation action.`,
-            correct: ["A","B","C","D"][Math.floor(Math.random() * 4)]
-        }));
-
-        const scenarios = Array.from({ length: 10 }, (_, i) => ({
-            text: `UserA: Message ${i + 1}\nUserB: Potential policy violation detected`,
-            correct: "C"
-        }));
-
-        /* -------------------------
-           DOM CHECK
-        ------------------------- */
-        const mcqContainer = document.getElementById("mcqContainer");
-        const scenarioContainer = document.getElementById("scenarioContainer");
-
-        if (!mcqContainer || !scenarioContainer) {
-            console.error("Missing containers");
-            return;
-        }
-
-        /* -------------------------
-           RENDER MCQ
-        ------------------------- */
-        mcq.forEach((q, i) => {
-
-            const div = document.createElement("div");
-
-            div.innerHTML = `
-                <p><b>Q${i + 1}.</b> ${q.q}</p>
-
-                <label><input type="radio" name="q${i}" value="A"> A</label><br>
-                <label><input type="radio" name="q${i}" value="B"> B</label><br>
-                <label><input type="radio" name="q${i}" value="C"> C</label><br>
-                <label><input type="radio" name="q${i}" value="D"> D</label>
-                <hr>
-            `;
-
-            mcqContainer.appendChild(div);
-        });
-
-        /* -------------------------
-           RENDER SCENARIOS
-        ------------------------- */
-        scenarios.forEach((s, i) => {
-
-            const div = document.createElement("div");
-
-            div.innerHTML = `
-                <pre>${s.text}</pre>
-
-                <label>Action</label>
-                <select id="s${i}">
-                    <option value="">Select</option>
-                    <option value="A">No Action</option>
-                    <option value="B">Warning</option>
-                    <option value="C">Suspension</option>
-                    <option value="D">Ban</option>
-                </select>
-
-                <hr>
-            `;
-
-            scenarioContainer.appendChild(div);
-        });
-
-        /* -------------------------
-           TIMER
-        ------------------------- */
-        let time = 45 * 60;
-        const timerEl = document.getElementById("timer");
-
-        setInterval(() => {
-
-            if (time <= 0) {
-                document.getElementById("examForm").requestSubmit();
-                return;
-            }
-
-            time--;
-
-            const m = Math.floor(time / 60);
-            const s = time % 60;
-
-            timerEl.textContent =
-                `${m}:${s.toString().padStart(2, "0")}`;
-
-        }, 1000);
-
-        /* -------------------------
-           SUBMIT
-        ------------------------- */
-        let submitted = false;
-
-        document.getElementById("examForm").addEventListener("submit", async (e) => {
-
-            e.preventDefault();
-
-            if (submitted) return;
-            submitted = true;
-
-            let score = 0;
-
-            mcq.forEach((q, i) => {
-                const selected = document.querySelector(`input[name="q${i}"]:checked`);
-                if (selected && selected.value === q.correct) score++;
-            });
-
-            scenarios.forEach((s, i) => {
-                const val = document.getElementById(`s${i}`).value;
-                if (val === s.correct) score++;
-            });
-
-            const submission = {
-                candidateName: name,
-                candidateEmail: email,
-                autoScore: score,
-                writtenResponses: {
-                    w1: document.getElementById("w1").value,
-                    w2: document.getElementById("w2").value,
-                    w3: document.getElementById("w3").value
-                },
-                status: "pending",
-                submittedAt: serverTimestamp()
-            };
-
-            await addDoc(collection(db, "attempts"), submission);
-
-            alert("Exam submitted successfully.");
-            window.location.href = "index.html";
-        });
-
-    } catch (err) {
-        console.error("Exam failed to load:", err);
-        alert("Error loading exam. Check console.");
-    }
-
-});
-</script>
+<script type="module" src="js/exam.js"></script>
 
 </body>
 </html>
