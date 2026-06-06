@@ -296,7 +296,6 @@ async function checkAttemptStatus(email){
     const snap = await getDocs(q);
 
     let hasPassed = false;
-    let hasPending = false;
 
     snap.forEach(doc => {
 
@@ -306,17 +305,9 @@ async function checkAttemptStatus(email){
             hasPassed = true;
         }
 
-        if(data.status === "pending"){
-            hasPending = true;
-        }
-
     });
 
-    return {
-        hasPassed,
-        hasPending
-    };
-
+    return { hasPassed };
 }
 
 /* ==========================================
